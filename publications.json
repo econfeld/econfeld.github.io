@@ -1,0 +1,40 @@
+{
+  "publications": [
+    {
+      "title": "Re-examining the Relationship between Patience, Risk-taking and Human Capital Investment across Countries",
+      "authors": "Jan Feld; Alexandra de Gendre; Nicol�s Salamanca",
+      "year": 2024,
+      "journal": "Journal of Applied Econometrics",
+      "doi": "https://doi.org/10.1016/j.jebo.2023.11.016",
+      "abstract": "For papers to have scientific impact, they need to impress our peers in their role as referees, journal editors, and members of conference committees. Does better writing help our papers make it past these gatekeepers? In this study, we estimate the effect of writing quality by comparing how 30 economists judge the quality of papers written by PhD students in economics. Each economist judged five papers in their original version and five different papers that had been language edited. No economist saw both versions of the same paper. Our results show that writing matters. Compared to the original versions, economists judge edited versions as higher quality; they are more willing to accept edited versions for a conference; and they believe that edited versions have a better chance of being accepted at a good journal.",
+      "replication_package": "DOI:10.15456/jae.2024044.2004572080",
+      "categories": [
+        "Meta-science"
+      ]
+    },
+    {
+      "title": "Writing Matters",
+      "authors": "Jan Feld; Corinna Lines; Libby Ross",
+      "year": 2024,
+      "journal": "Journal of Economic Behavior & Organization",
+      "volume": "217",
+      "pages": "378-397",
+      "replication_package": "https://osf.io/dgfxy/",
+      "categories": [
+        "Economics of education",
+        "Meta-science"
+      ]
+    },
+    {
+      "title": "Do Financial Incentives Encourage Women to Apply for a Tech Job? Evidence from a Natural Field Experiment",
+      "authors": "Jan Feld; Edwin Ip; Andreas Leibbrandt; Joseph Vecci",
+      "year": 2023,
+      "journal": "AEA Papers and Proceedings",
+      "volume": "113",
+      "pages": "432-435",
+      "categories": [
+        "Replications"
+      ]
+    }
+  ]
+}
