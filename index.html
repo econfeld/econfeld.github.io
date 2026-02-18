@@ -1,11 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Jan Feld</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publications</title>
+  <link rel="stylesheet" href="publications-academic.css">
 </head>
 <body>
-  <h1>Jan Feld</h1>
-  <p>Homepage coming soon.</p>
+  <div class="publications">
+    <h1 class="publications-title">Publications</h1>
+    <div class="filter-section">
+      <div class="filter-label">Show only:</div>
+      <div id="categories-filter"></div>
+    </div>
+    <div id="publications-list"></div>
+  </div>
+
+  <script>
+    let allPublications = [];
+    let selectedCategories = new Set();
+
+    async function loadPublications() {
+      const container = document.getElementById('publications-list');
+      const filterContainer = document.getElementById('categories-filter');
+      
+      try {
+        const response = await fetch('publications.json');
+        if (!response.ok) throw new Error(`Failed to load: ${response.status}`);
+        
+        const data = await response.json();
+        allPublications = data.publications || [];
+
+        if (allPublications.length === 0) {
+          container.innerHTML = '<p class="empty">No publications found.</p>';
+          return;
+        }
+
+        // Sort by year descending
+        allPublications.sort((a, b) => (b.year || 0) - (a.year || 0));
+
+        // Extract unique categories and render filter buttons
+        const categoriesSet = new Set();
+        allPublications.forEach(pub => {
+          if (pub.categories && Array.isArray(pub.categories)) {
+            pub.categories.forEach(cat => categoriesSet.add(cat));
+          }
+        });
+
+        if (categoriesSet.size > 0) {
+          const categories = Array.from(categoriesSet).sort();
+          let filterHTML = '<div class="categories-bar">';
+          categories.forEach(cat => {
+            filterHTML += `<button class="category-button" data-category="${cat}">${cat}</button>`;
+          });
+          filterHTML += '</div>';
+          filterContainer.innerHTML = filterHTML;
+
+          // Add click handlers to category buttons
+          document.querySelectorAll('.category-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const category = this.getAttribute('data-category');
+              if (selectedCategories.has(category)) {
+                selectedCategories.delete(category);
+                this.classList.remove('active');
+              } else {
+                selectedCategories.add(category);
+                this.classList.add('active');
+              }
+              renderPublications();
+            });
+          });
+        }
+
+        renderPublications();
+
+      } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `<p class="error">Error loading publications. Make sure <code>publications.json</code> is in the same directory.</p>`;
+      }
+    }
+
+    function renderPublications() {
+      const container = document.getElementById('publications-list');
+      
+      // Filter publications based on selected categories
+      let pubs = allPublications;
+      if (selectedCategories.size > 0) {
+        pubs = allPublications.filter(pub => {
+          if (!pub.categories || pub.categories.length === 0) return false;
+          return pub.categories.some(cat => selectedCategories.has(cat));
+        });
+      }
+
+      if (pubs.length === 0) {
+        container.innerHTML = '<p class="empty">No publications in this category.</p>';
+        return;
+      }
+
+      // Generate citation for each publication
+      let html = '';
+      pubs.forEach((pub, idx) => {
+        const title = pub.title || '';
+        const journal = pub.journal || '';
+        const volume = pub.volume || '';
+        const pages = pub.pages || '';
+        const year = pub.year || '';
+        
+        // Build journal citation: "Journal, Vol:Pages (Year)" or variations
+        let journalCitation = '';
+        if (journal) {
+          journalCitation = `<em>${journal}</em>`;
+          if (volume || pages) {
+            journalCitation += ', ';
+            if (volume && pages) {
+              journalCitation += `${volume}:${pages}`;
+            } else if (volume) {
+              journalCitation += volume;
+            } else if (pages) {
+              journalCitation += pages;
+            }
+          }
+          if (year) {
+            journalCitation += ` (${year})`;
+          }
+        }
+
+        // Build coauthors line: "with Name1; Name2; Name3" (excluding Jan Feld)
+        let coauthorsLine = '';
+        if (pub.authors) {
+          const authorList = pub.authors.split(';').map(a => a.trim());
+          const otherAuthors = authorList.filter(a => a !== 'Jan Feld');
+          if (otherAuthors.length > 0) {
+            coauthorsLine = ', with ' + otherAuthors.join('; ');
+          }
+        }
+
+        // Build DOI URL if available (prioritize DOI over URL for title link)
+        let titleHref = null;
+        if (pub.doi) {
+          titleHref = pub.doi.startsWith('http') ? pub.doi : `https://doi.org/${pub.doi}`;
+        } else if (pub.url) {
+          titleHref = pub.url;
+        }
+        
+        // Build the full citation with bold title
+        const titleElement = titleHref 
+          ? `<strong><a href="${titleHref}" target="_blank">${title}</a></strong>`
+          : `<strong>${title}</strong>`;
+
+        // Build replication package link if available
+        let replPackageHTML = '';
+        if (pub.replication_package) {
+          let replUrl = pub.replication_package;
+          if (replUrl.startsWith('DOI:')) {
+            replUrl = replUrl.replace(/^DOI:/, '');
+            replUrl = `https://doi.org/${replUrl}`;
+          } else if (!replUrl.startsWith('http')) {
+            replUrl = `https://doi.org/${replUrl}`;
+          }
+          replPackageHTML = `<span class="replication-toggle"><a href="${replUrl}" target="_blank" rel="noopener noreferrer" class="replication-link">[replication package]</a></span>`;
+        }
+
+        // Build abstract toggle
+        let abstractHTML = '';
+        if (pub.abstract) {
+          const abstractId = `abstract-${idx}`;
+          abstractHTML = `
+            <span class="abstract-toggle">
+              <button class="abstract-button" data-target="${abstractId}">[view abstract]</button>
+            </span>
+            <div class="abstract-content" id="${abstractId}" style="display: none;">
+              <div class="abstract-text">${pub.abstract}</div>
+            </div>
+          `;
+        }
+        
+        const citation = `${titleElement}<div class="citation-line">${journalCitation}${coauthorsLine} ${replPackageHTML}${abstractHTML}</div>`;
+        
+        html += `<div class="publication-entry">${citation}</div>`;
+      });
+
+      container.innerHTML = html;
+
+      // Attach click handlers to abstract buttons
+      setTimeout(() => {
+        document.querySelectorAll('.abstract-button').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const abstractEl = document.getElementById(targetId);
+            if (abstractEl) {
+              const isHidden = abstractEl.style.display === 'none';
+              abstractEl.style.display = isHidden ? 'block' : 'none';
+              this.textContent = isHidden ? '[hide abstract]' : '[view abstract]';
+            }
+          });
+        });
+      }, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPublications);
+  </script>
 </body>
 </html>
